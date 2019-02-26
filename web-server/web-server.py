@@ -24,7 +24,7 @@ def listen(data_socket):
                 # Wait for bytes to be sent, and decode as ASCII when they do arrive.
                 http_request = data_socket.recv(num_bytes).decode('ascii')
             except ConnectionAbortedError:
-                pass
+                break
 
             #print(http_request)
 
