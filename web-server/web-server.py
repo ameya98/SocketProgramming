@@ -1,68 +1,70 @@
-import socket
+import socket, sys
+
+# Get directory as command-line argument, default to current directory.
+try:
+    rootdir = sys.argv[1]
+except IndexError:
+    rootdir = '.'
+
 
 # Starts the server to listen over the give port.
 def start_server(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listening_socket:
+        # Bind socket to port and start listening.
         listening_socket.bind((host, port))
         listening_socket.listen()
-
         print('Server listening on port', port)
-        connection_socket, address = listening_socket.accept()
 
-        print('Connection from', address)
-        listen(connection_socket)
-        print('Connection with', address, 'closed.')
+        # Keep listening and accepting connections. Currently blocking.
+        while True:
+            connection_socket, address = listening_socket.accept()
+
+            print('Connection from', address[0], 'on port', address[1])
+            listen(connection_socket)
+            print('Connection with', address[0], 'on port', address[1], 'closed')
 
 
-# Listens and trasmits over the socket identified with this socket object.
+# Listens and transmits over the socket identified with this socket object.
 def listen(data_socket):
     num_bytes = 10000
 
     with data_socket:
-        while True:
-            try:
-                # Wait for bytes to be sent, and decode as ASCII when they do arrive.
-                http_request = data_socket.recv(num_bytes).decode('ascii')
-            except ConnectionAbortedError:
-                break
+        try:
+            # Wait for bytes to be sent, and decode as ASCII when they do arrive.
+            http_request = data_socket.recv(num_bytes).decode('ascii')
+        except ConnectionAbortedError:
+            return
 
-            #print(http_request)
+        try:
+            # Parse the HTTP request to get the file name.
+            file_name = get_file_name(http_request)
 
-            try:
-                # Parse the HTTP request to get the file name.
-                file_name = get_file_name(http_request)
+            # Open file and read contents.
+            # If the file doesn't exist, we catch the FileNotFound exception.
+            with open(file_name, 'r') as f:
+                file_text = f.read()
 
-                # Open file and read contents.
-                # If the file doesn't exist, we catch the FileNotFound exception.
-                with open(file_name, 'r') as f:
-                    file_text = f.read()
+            # Create the HTTP response with file_text in the body.
+            response = http_response(file_text)
 
-                # Create the HTTP response with file_text in the body.
-                response = http_response(file_text)
+        except (FileNotFoundError, IndexError):
+            error_text = 'Error: File not found.'
 
-            except (FileNotFoundError, IndexError, ValueError, TypeError):
-                error_text = 'Error: File not found.'
+            # Create the HTTP response with the error message in the body.
+            response = http_error(error_text)
 
-                # Create the HTTP response with the error message in the body.
-                response = http_error(error_text)
-
-            # Send the byte-encoded response over the socket.
-            data_socket.sendall(response.encode())
+        # Send the byte-encoded response over the socket.
+        data_socket.sendall(response.encode())
 
 
 # Hacky parsing to extract the file name from the HTTP request.
 def get_file_name(request):
     try:
-        filename = request.split()[1][1:]
-        if filename[:6] == 'files/':
-            return filename
-        else:
-            print('Restricted access to file', filename)
-            raise ValueError
-
+        filename = request.split()[1]
+        return rootdir + filename
     except IndexError:
         print('Invalid request', request, 'of length', len(request))
-
+        raise
 
 def http_error(error_message):
     return http_response(error_message, status=404, status_text='NOT FOUND')
@@ -92,7 +94,6 @@ def http_response(text, status=200, status_text='OK'):
     response += response_headers_raw + '\n'
     response += response_body_raw + '\n'
 
-    #print(response)
     return response
 
 
