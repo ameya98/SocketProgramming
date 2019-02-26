@@ -1,5 +1,6 @@
 # Socket Programming
-Exercises taken from the 6th edition of *Computer Networks: A Top-Down Approach* by Kurose and Ross.
+Exercises taken from the 6th edition of *Computer Networks: A Top-Down Approach* by Kurose and Ross.   
+The textbook materials and code snippets are locked behind a paywall, so these are my own implementations of the exercises. Please raise an issue if you find any bugs.
 
 ## Web Server
 Retrieves contents of files stored server-side. Currently, only one request served at a time.  
