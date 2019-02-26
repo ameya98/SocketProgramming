@@ -24,12 +24,14 @@ def listen(data_socket):
                 # Wait for bytes to be sent, and decode as ASCII when they do arrive.
                 http_request = data_socket.recv(num_bytes).decode('ascii')
             except ConnectionAbortedError:
-                break
+                pass
 
-            # Parse the HTTP request to get the file name.
-            file_name = get_file_name(http_request)
+            #print(http_request)
 
             try:
+                # Parse the HTTP request to get the file name.
+                file_name = get_file_name(http_request)
+
                 # Open file and read contents.
                 # If the file doesn't exist, we catch the FileNotFound exception.
                 with open(file_name, 'r') as f:
@@ -38,7 +40,7 @@ def listen(data_socket):
                 # Create the HTTP response with file_text in the body.
                 response = http_response(file_text)
 
-            except FileNotFoundError:
+            except (FileNotFoundError, IndexError, ValueError, TypeError):
                 error_text = 'Error: File not found.'
 
                 # Create the HTTP response with the error message in the body.
@@ -48,10 +50,18 @@ def listen(data_socket):
             data_socket.sendall(response.encode())
 
 
+# Hacky parsing to extract the file name from the HTTP request.
 def get_file_name(request):
-    # Change line endings to '\n' only.
-    # request = ''.join(line + '\n' for line in request.splitlines())
-    return 'files/file1.txt'
+    try:
+        filename = request.split()[1][1:]
+        if filename[:6] == 'files/':
+            return filename
+        else:
+            print('Restricted access to file', filename)
+            raise ValueError
+
+    except IndexError:
+        print('Invalid request', request, 'of length', len(request))
 
 
 def http_error(error_message):
@@ -68,7 +78,7 @@ def http_response(text, status=200, status_text='OK'):
     response_headers = {
         'Content-Type': 'text/html; encoding=utf8',
         'Content-Length': len(text),
-        'Connection': 'close',
+        'Connection': 'keep-alive',
     }
 
     # Combining all of these as one string.
@@ -82,7 +92,7 @@ def http_response(text, status=200, status_text='OK'):
     response += response_headers_raw + '\n'
     response += response_body_raw + '\n'
 
-    print(response)
+    #print(response)
     return response
 
 
