@@ -7,9 +7,10 @@ except IndexError:
     rootdir = '.'
 
 
-# Starts the server to listen over the give port.
+# Starts the server to listen over the given port.
 def start_server(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listening_socket:
+
         # Bind socket to port and start listening.
         listening_socket.bind((host, port))
         listening_socket.listen()
@@ -45,7 +46,7 @@ def listen(data_socket):
                 file_text = f.read()
 
             # Create the HTTP response with file_text in the body.
-            response = http_response(file_text)
+            response = http_okay(file_text)
 
         except (FileNotFoundError, IndexError):
             error_text = 'Error: File not found.'
@@ -66,11 +67,20 @@ def get_file_name(request):
         print('Invalid request', request, 'of length', len(request))
         raise
 
+
+# Returns a string with a HTTP status code of 404, with the response body as the error message.
 def http_error(error_message):
     return http_response(error_message, status=404, status_text='NOT FOUND')
 
 
+# Returns a string with a HTTP status code of 200, with the response body as passed.
+def http_okay(response_body):
+    return http_response(response_body, status=200, status_text='OK')
+
+
+# Returns a string containing HTTP headers with the text message in the body.
 def http_response(text, status=200, status_text='OK'):
+
     # Indicates the HTTP protocol being used, and the status.
     response_proto = 'HTTP/1.1'
     response_status = str(status)
