@@ -1,4 +1,12 @@
-import socket, sys
+"""
+Web Server
+Author: Ameya Daigavane
+Serves serverside file.
+"""
+
+import socket
+import sys
+import asyncio
 
 # Get directory as command-line argument, default to current directory.
 try:
@@ -11,18 +19,19 @@ except IndexError:
 def start_server(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listening_socket:
 
+        print('Server listening on port', port, flush=True)
+
         # Bind socket to port and start listening.
         listening_socket.bind((host, port))
         listening_socket.listen()
-        print('Server listening on port', port)
 
         # Keep listening and accepting connections. Currently blocking.
         while True:
             connection_socket, address = listening_socket.accept()
 
-            print('Connection from', address[0], 'on port', address[1])
+            print('Connection from', address[0], 'on port', address[1], flush=True)
             listen(connection_socket)
-            print('Connection with', address[0], 'on port', address[1], 'closed')
+            print('Connection with', address[0], 'on port', address[1], 'closed', flush=True)
 
 
 # Listens and transmits over the socket identified with this socket object.
@@ -64,7 +73,7 @@ def get_file_name(request):
         filename = request.split()[1]
         return rootdir + filename
     except IndexError:
-        print('Invalid request', request, 'of length', len(request))
+        print('Invalid request', request, 'of length', len(request), flush=True)
         raise
 
 
@@ -90,7 +99,7 @@ def http_response(text, status=200, status_text='OK'):
     response_headers = {
         'Content-Type': 'text/html; encoding=utf8',
         'Content-Length': len(text),
-        'Connection': 'keep-alive',
+        'Connection': 'close',
     }
 
     # Combining all of these as one string.
