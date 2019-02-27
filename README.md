@@ -3,10 +3,9 @@ Exercises taken from the 6th edition of *Computer Networks: A Top-Down Approach*
 The textbook materials and code snippets are locked behind a paywall, so these are my own implementations of the exercises. Please raise an issue if you find any bugs.
 
 ## Web Server
-Retrieves contents of files stored server-side. Currently, only one request served at a time.  
-Run with:
+Serves files stored server-side. Run with:
 ```python
 python web-server.py dirpath
 ```
-
 *dirpath* is an optional argument indicating the path to the directory containing files to be read. Both absolute and relative paths work. If not passed, the current directory is used.
+Currently, only one request served at a time. 
