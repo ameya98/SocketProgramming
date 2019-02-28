@@ -1,12 +1,13 @@
 """
-Web Server
+Asynchronous IO Based Web Server
 Author: Ameya Daigavane
-Serves server-side files.
+Serves files stored server-side using non-blocking sockets and system calls.
 """
 
 import socket
 import sys
 import asyncio
+import aiofiles
 
 # Get directory as command-line argument, default to current directory.
 try:
@@ -18,8 +19,10 @@ except IndexError:
 # Starts the server to listen over the given port.
 def start_server(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listening_socket:
-
         print('Server listening on port', port, flush=True)
+
+        # Make socket non-blocking
+        listening_socket.setblocking(0)
 
         # Bind socket to port and start listening.
         listening_socket.bind((host, port))
@@ -27,14 +30,15 @@ def start_server(host, port):
 
         # Keep listening and accepting connections.
         loop = asyncio.get_event_loop()
+        loop.set_debug(True)
         loop.run_until_complete(accept_connections(listening_socket))
 
 
 # Accept connections. Non-blocking due to asyncio.
 async def accept_connections(listening_socket):
-    while True:
-        loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop()
 
+    while True:
         connection_socket, address = await loop.sock_accept(listening_socket)
         print('Connection from', address[0], 'on port', address[1], flush=True)
 
@@ -45,11 +49,11 @@ async def accept_connections(listening_socket):
 # Listens and transmits over the socket identified with this socket object.
 async def listen(data_socket):
     loop = asyncio.get_event_loop()
-    num_bytes = 10000
 
     with data_socket:
         try:
             # Wait for bytes to be sent, and decode as ASCII when they do arrive.
+            num_bytes = 10000
             http_request = (await loop.sock_recv(data_socket, num_bytes)).decode('ascii')
         except ConnectionAbortedError:
             return
@@ -60,13 +64,13 @@ async def listen(data_socket):
 
             # Open file and read contents.
             # If the file doesn't exist, we catch the FileNotFound exception.
-            with open(rootdir + file_name, 'r') as f:
-                file_text = f.read()
+            async with aiofiles.open(rootdir + file_name, 'r') as f:
+                file_text = await f.read()
 
             # Create the HTTP response with file_text in the body.
             response = http_okay(file_text)
 
-        except (FileNotFoundError, IndexError):
+        except (FileNotFoundError, IndexError, UnicodeDecodeError):
             error_text = 'Error: File not found.'
 
             # Create the HTTP response with the error message in the body.
