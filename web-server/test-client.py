@@ -8,16 +8,21 @@ import multiprocessing
 import os
 import requests
 import sys
+import time
 
 # Remove command-line proxy settings.
 os.environ['HTTP_PROXY'] = ''
 
+# Start timing.
+start_time = time.clock()
+
 
 def start_client(client_num, file_path):
     # Using the requests library to make HTTP requests.
-    response = requests.get('http://localhost:7000' + file_path)
+    response = requests.get('http://localhost:7000/' + file_path)
 
-    print(client_num, response.text)
+    # Print the time elapsed.
+    print('Client', client_num, 'finished at time', time.clock() - start_time)
 
 
 if __name__ == '__main__':
@@ -30,7 +35,7 @@ if __name__ == '__main__':
     try:
         file_path = sys.argv[2]
     except (IndexError, TypeError):
-        file_path = '/files/bigfile1.txt'
+        file_path = 'files/bigfile1.txt'
 
     # Create client subprocesses.
     clients = []

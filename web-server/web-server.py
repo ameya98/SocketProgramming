@@ -26,7 +26,7 @@ def start_server(host, port):
 
         # Bind socket to port and start listening.
         listening_socket.bind((host, port))
-        listening_socket.listen()
+        listening_socket.listen(2)
 
         # Keep listening and accepting connections.
         loop = asyncio.get_event_loop()
@@ -70,14 +70,14 @@ async def listen(data_socket):
             # Create the HTTP response with file_text in the body.
             response = http_okay(file_text)
 
-        except (FileNotFoundError, IndexError, UnicodeDecodeError):
+        except (FileNotFoundError, IndexError, UnicodeDecodeError, OSError):
             error_text = 'Error: File not found.'
 
             # Create the HTTP response with the error message in the body.
             response = http_error(error_text)
 
         # Send the byte-encoded response over the socket.
-        loop.sock_sendall(data_socket, response.encode())
+        await loop.sock_sendall(data_socket, response.encode())
 
 
 # Hacky parsing to extract the file name from the HTTP request.
