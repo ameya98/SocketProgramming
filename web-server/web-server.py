@@ -32,21 +32,25 @@ def start_server(host, port):
 
 # Accept connections. Non-blocking due to asyncio.
 async def accept_connections(listening_socket):
-    connection_socket, address = await listening_socket.accept()
-    print('Connection from', address[0], 'on port', address[1], flush=True)
+    while True:
+        loop = asyncio.get_event_loop()
 
-    listen(connection_socket)
-    print('Connection with', address[0], 'on port', address[1], 'closed', flush=True)
+        connection_socket, address = await loop.sock_accept(listening_socket)
+        print('Connection from', address[0], 'on port', address[1], flush=True)
+
+        await listen(connection_socket)
+        print('Connection with', address[0], 'on port', address[1], 'closed', flush=True)
 
 
 # Listens and transmits over the socket identified with this socket object.
 async def listen(data_socket):
+    loop = asyncio.get_event_loop()
     num_bytes = 10000
 
     with data_socket:
         try:
             # Wait for bytes to be sent, and decode as ASCII when they do arrive.
-            http_request = await data_socket.recv(num_bytes).decode('ascii')
+            http_request = (await loop.sock_recv(data_socket, num_bytes)).decode('ascii')
         except ConnectionAbortedError:
             return
 
@@ -69,7 +73,7 @@ async def listen(data_socket):
             response = http_error(error_text)
 
         # Send the byte-encoded response over the socket.
-        data_socket.sendall(response.encode())
+        loop.sock_sendall(data_socket, response.encode())
 
 
 # Hacky parsing to extract the file name from the HTTP request.

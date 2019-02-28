@@ -7,6 +7,7 @@ Spawns multiple clients that make HTTP requests to our server.
 import multiprocessing
 import os
 import requests
+import sys
 
 # Remove command-line proxy settings.
 os.environ['HTTP_PROXY'] = ''
@@ -20,9 +21,12 @@ def start_client(client_num):
 
 
 if __name__ == '__main__':
-    clients = []
-    num_clients = 100
+    try:
+        num_clients = int(sys.argv[1])
+    except (IndexError, TypeError):
+        num_clients = 10
 
+    clients = []
     for client_num in range(num_clients):
         client_process = multiprocessing.Process(target=start_client, args=(client_num,))
         client_process.start()
