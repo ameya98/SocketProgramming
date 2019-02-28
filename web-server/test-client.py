@@ -11,8 +11,8 @@ import requests
 # Remove command-line proxy settings.
 os.environ['HTTP_PROXY'] = ''
 
-def start_client(client_num):
 
+def start_client(client_num):
     # Using the requests library to make HTTP requests.
     response = requests.get('http://localhost:7000/files/file1.txt')
 

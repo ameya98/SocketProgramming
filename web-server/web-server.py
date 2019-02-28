@@ -1,7 +1,7 @@
 """
 Web Server
 Author: Ameya Daigavane
-Serves serverside file.
+Serves server-side files.
 """
 
 import socket
@@ -28,8 +28,8 @@ def start_server(host, port):
         # Keep listening and accepting connections. Currently blocking.
         while True:
             connection_socket, address = listening_socket.accept()
-
             print('Connection from', address[0], 'on port', address[1], flush=True)
+
             listen(connection_socket)
             print('Connection with', address[0], 'on port', address[1], 'closed', flush=True)
 
@@ -51,7 +51,7 @@ def listen(data_socket):
 
             # Open file and read contents.
             # If the file doesn't exist, we catch the FileNotFound exception.
-            with open(file_name, 'r') as f:
+            with open(rootdir + file_name, 'r') as f:
                 file_text = f.read()
 
             # Create the HTTP response with file_text in the body.
@@ -71,7 +71,7 @@ def listen(data_socket):
 def get_file_name(request):
     try:
         filename = request.split()[1]
-        return rootdir + filename
+        return filename
     except IndexError:
         print('Invalid request', request, 'of length', len(request), flush=True)
         raise
@@ -117,7 +117,7 @@ def http_response(text, status=200, status_text='OK'):
 
 
 if __name__ == '__main__':
-    host = "127.0.0.1"
+    host = '127.0.0.1'
     port = 7000
 
     start_server(host, port)
