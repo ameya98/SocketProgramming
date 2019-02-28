@@ -25,23 +25,28 @@ def start_server(host, port):
         listening_socket.bind((host, port))
         listening_socket.listen()
 
-        # Keep listening and accepting connections. Currently blocking.
-        while True:
-            connection_socket, address = listening_socket.accept()
-            print('Connection from', address[0], 'on port', address[1], flush=True)
+        # Keep listening and accepting connections.
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(accept_connections(listening_socket))
 
-            listen(connection_socket)
-            print('Connection with', address[0], 'on port', address[1], 'closed', flush=True)
+
+# Accept connections. Non-blocking due to asyncio.
+async def accept_connections(listening_socket):
+    connection_socket, address = await listening_socket.accept()
+    print('Connection from', address[0], 'on port', address[1], flush=True)
+
+    listen(connection_socket)
+    print('Connection with', address[0], 'on port', address[1], 'closed', flush=True)
 
 
 # Listens and transmits over the socket identified with this socket object.
-def listen(data_socket):
+async def listen(data_socket):
     num_bytes = 10000
 
     with data_socket:
         try:
             # Wait for bytes to be sent, and decode as ASCII when they do arrive.
-            http_request = data_socket.recv(num_bytes).decode('ascii')
+            http_request = await data_socket.recv(num_bytes).decode('ascii')
         except ConnectionAbortedError:
             return
 
